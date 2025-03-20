@@ -92,3 +92,23 @@ export const textProcessingSchema = z.object({
 });
 
 export type TextProcessingRequest = z.infer<typeof textProcessingSchema>;
+
+// Text Processing Result Schema
+export const textIssueSchema = z.object({
+  type: z.enum(["grammar", "suggestion", "improvement"]),
+  message: z.string(),
+  suggestion: z.string(),
+  position: z.object({
+    start: z.number(),
+    end: z.number()
+  }).optional()
+});
+
+export const textProcessingResultSchema = z.object({
+  processedText: z.string(),
+  similarity: z.number().optional(),
+  issues: z.array(textIssueSchema)
+});
+
+export type TextIssue = z.infer<typeof textIssueSchema>;
+export type TextProcessingResult = z.infer<typeof textProcessingResultSchema>;

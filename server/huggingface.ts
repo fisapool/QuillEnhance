@@ -48,7 +48,15 @@ async function generateText(text: string, instruction: string): Promise<string> 
   }
 }
 
-export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ processedText: string, similarity: number }> {
+export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ processedText: string, similarity: number, issues?: Array<{
+  type: 'grammar' | 'suggestion' | 'improvement';
+  message: string;
+  suggestion: string;
+  position?: {
+    start: number;
+    end: number;
+  };
+}> }> {
   try {
     let instruction = "Paraphrase the following text while preserving its meaning";
     
@@ -73,41 +81,67 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
   }
 }
 
-export async function humanizeAIText(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function humanizeAIText(text: string): Promise<{ processedText: string, similarity?: number, issues: Array<{
+  type: 'grammar' | 'suggestion' | 'improvement';
+  message: string;
+  suggestion: string;
+  position?: {
+    start: number;
+    end: number;
+  };
+}> }> {
   try {
     const instruction = "Make the following AI-generated text sound more human. Remove repetitive patterns, add natural language variations, incorporate conversational elements, and vary sentence structures.";
     
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
     
-    return { processedText, similarity };
+    return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Humanizing error with Hugging Face:", error);
     return {
       processedText: `[Error] Failed to humanize text. ${text}`,
-      similarity: 100
+      similarity: 100,
+      issues: []
     };
   }
 }
 
-export async function rewordText(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function rewordText(text: string): Promise<{ processedText: string, similarity?: number, issues: Array<{
+  type: 'grammar' | 'suggestion' | 'improvement';
+  message: string;
+  suggestion: string;
+  position?: {
+    start: number;
+    end: number;
+  };
+}> }> {
   try {
     const instruction = "Reword the following text. Replace words with synonyms while preserving the original meaning, structure, and length.";
     
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
     
-    return { processedText, similarity };
+    return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Rewording error with Hugging Face:", error);
     return {
       processedText: `[Error] Failed to reword text. ${text}`,
-      similarity: 100
+      similarity: 100,
+      issues: []
     };
   }
 }
 
-export async function rewriteParagraph(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function rewriteParagraph(text: string): Promise<{ processedText: string, similarity?: number, issues: Array<{
+  type: 'grammar' | 'suggestion' | 'improvement';
+  message: string;
+  suggestion: string;
+  position?: {
+    start: number;
+    end: number;
+  };
+}> }> {
   try {
     const instruction = "Rewrite the following paragraph. Restructure and rephrase the paragraph while maintaining the core information and meaning.";
     
