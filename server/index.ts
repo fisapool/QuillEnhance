@@ -11,9 +11,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Log which AI service we're using
-const usingClaude = process.env.CLAUDE_API_KEY;
-const usingHuggingFace = !process.env.OPENAI_API_KEY || process.env.PREFER_HUGGINGFACE === 'true';
-log(`Using ${usingClaude ? 'Claude' : usingHuggingFace ? 'Hugging Face' : 'OpenAI'} for AI services`);
+const usingGemini = process.env.GEMINI_API_KEY;
+const usingClaude = !usingGemini && process.env.CLAUDE_API_KEY;
+const usingHuggingFace = !usingGemini && !process.env.OPENAI_API_KEY || process.env.PREFER_HUGGINGFACE === 'true';
+log(`Using ${usingGemini ? 'Gemini' : usingClaude ? 'Claude' : usingHuggingFace ? 'Hugging Face' : 'OpenAI'} for AI services`);
 if (usingHuggingFace) {
   if (process.env.HUGGING_FACE_API_KEY) {
     log('Using provided Hugging Face API key for higher rate limits');
