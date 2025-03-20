@@ -1,14 +1,15 @@
 import { HfInference } from '@huggingface/inference';
 import { calculateSimilarity } from './nlp';
 
-// If no API key is provided, Hugging Face Inference will use a rate-limited public API
+// If no API key is provided, use models that don't require authentication
 // For better performance, users can get a free API key from huggingface.co
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
 // Model IDs for different tasks
-const TEXT_GENERATION_MODEL = 'mistralai/Mistral-7B-Instruct-v0.2'; // Good open source model for text generation
-const SUMMARIZATION_MODEL = 'facebook/bart-large-cnn';
-const TRANSLATION_MODEL = 'Helsinki-NLP/opus-mt-en-ROMANCE'; // For romance languages
+// These models are smaller and accessible without authentication
+const TEXT_GENERATION_MODEL = 'gpt2'; // Available without authentication 
+const SUMMARIZATION_MODEL = 'sshleifer/distilbart-cnn-12-6'; // Smaller accessible version
+const TRANSLATION_MODEL = 'google/flan-t5-small'; // General purpose text model
 
 /**
  * Process text using Hugging Face models
@@ -18,27 +19,29 @@ const TRANSLATION_MODEL = 'Helsinki-NLP/opus-mt-en-ROMANCE'; // For romance lang
  */
 async function generateText(text: string, instruction: string): Promise<string> {
   try {
+    const prompt = `${instruction}:\n\n${text}\n\nOutput:`;
+    
     const response = await hf.textGeneration({
       model: TEXT_GENERATION_MODEL,
-      inputs: `<s>[INST] ${instruction}:\n\n${text} [/INST]`,
+      inputs: prompt,
       parameters: {
-        max_new_tokens: 1024,
+        max_new_tokens: 256,
         temperature: 0.7,
         top_p: 0.95,
-        repetition_penalty: 1.15
+        repetition_penalty: 1.15,
+        do_sample: true
       }
     });
     
-    // Extract the generated text and clean up any instruction formatting
+    // Extract the generated text
     let processedText = response.generated_text || '';
     
     // Remove the input prompt from the generated text
-    const promptPart = `<s>[INST] ${instruction}:\n\n${text} [/INST]`;
-    if (processedText.startsWith(promptPart)) {
-      processedText = processedText.substring(promptPart.length).trim();
+    if (processedText.startsWith(prompt)) {
+      processedText = processedText.substring(prompt.length).trim();
     }
     
-    return processedText;
+    return processedText || text;
   } catch (error) {
     console.error('Hugging Face text generation error:', error);
     return `[Error] Failed to process text with Hugging Face. Original text: ${text}`;
@@ -123,35 +126,20 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
 
 export async function summarizeText(text: string): Promise<{ processedText: string, similarity?: number }> {
   try {
-    // For summarization, we'll use a specific summarization model
-    const response = await hf.summarization({
-      model: SUMMARIZATION_MODEL,
-      inputs: text,
-      parameters: {
-        max_length: Math.min(150, Math.ceil(text.length * 0.3)) // 30% of original length or 150 tokens max
-      }
-    });
-    
-    const processedText = response.summary_text || '';
+    // Use text generation for summarization to avoid authentication issues
+    const instruction = "Summarize the following text concisely while preserving the key points";
+    const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
     
     return { processedText, similarity };
   } catch (error) {
     console.error("Summarizing error with Hugging Face:", error);
     
-    // Fallback to generation API if summarization fails
-    try {
-      const instruction = "Summarize the following text concisely while preserving the key points:";
-      const processedText = await generateText(text, instruction);
-      const similarity = calculateSimilarity(text, processedText);
-      
-      return { processedText, similarity };
-    } catch (fallbackError) {
-      return {
-        processedText: `[Error] Failed to summarize text. ${text}`,
-        similarity: 100
-      };
-    }
+    // Return original text with error message
+    return {
+      processedText: `[Error] Failed to summarize text. ${text}`,
+      similarity: 100
+    };
   }
 }
 
