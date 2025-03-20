@@ -163,14 +163,50 @@ async function translateText(text: string, targetLanguage: string): Promise<{
     };
   }>;
 }> {
-  const result = await gemini.translateText(text, targetLanguage); // Using Gemini API
-
-  // Ensure the result has an issues array
-  if (!result.issues) {
-    result.issues = [];
+  // Try OpenAI first if available
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      const result = await openai.translateText(text, targetLanguage);
+      if (!result.processedText.includes('[Error]')) {
+        return result;
+      }
+    } catch (error) {
+      console.error('OpenAI translation failed:', error);
+    }
   }
 
-  return result;
+  // Try Gemini if available
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const result = await gemini.translateText(text, targetLanguage);
+      if (!result.processedText.includes('[Error]')) {
+        return result;
+      }
+    } catch (error) {
+      console.error('Gemini translation failed:', error);
+    }
+  }
+
+  // Try Hugging Face as last resort
+  try {
+    const result = await huggingface.translateText(text, targetLanguage);
+    if (!result.processedText.includes('[Error]')) {
+      return result;
+    }
+  } catch (error) {
+    console.error('Hugging Face translation failed:', error);
+  }
+
+  // If all APIs fail, return error message
+  return {
+    processedText: text + "\n[Translation service unavailable. Please try again later.]",
+    similarity: 100,
+    issues: [{
+      type: 'error',
+      message: 'Translation service is currently unavailable',
+      suggestion: 'Please try again later'
+    }]
+  };
 }
 
 async function checkGrammar(text: string): Promise<{
