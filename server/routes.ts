@@ -80,7 +80,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Text cannot be empty" });
       }
 
-      let result;
+      // Initialize result object
+      let result: {
+        processedText: string;
+        similarity?: number;
+        issues: Array<{
+          type: 'grammar' | 'suggestion' | 'improvement';
+          message: string;
+          suggestion: string;
+          position?: {
+            start: number;
+            end: number;
+          };
+        }>;
+      } = {
+        processedText: text,
+        issues: []
+      };
       
       // Process text based on the process type
       try {
@@ -121,25 +137,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Simple fallback implementations
           switch (processType) {
             case "paraphrase":
-            case "humanize":
-            case "reword":
-            case "rewriteParagraph":
-              // Just shuffle some words around as a very basic fallback
-              const words = text.split(' ');
-              const newWords = [...words];
-              for (let i = 0; i < Math.min(3, Math.floor(words.length / 2)); i++) {
-                const idx1 = Math.floor(Math.random() * words.length);
-                const idx2 = Math.floor(Math.random() * words.length);
-                [newWords[idx1], newWords[idx2]] = [newWords[idx2], newWords[idx1]];
+              // Simple paraphrasing: change word order and structure
+              const paraphraseSentences = text.split(/[.!?]+/).filter(s => s.trim() !== '');
+              if (paraphraseSentences.length > 1) {
+                // Rearrange sentence order for multiple sentences
+                const newSentences = [...paraphraseSentences];
+                for (let i = 0; i < Math.min(2, Math.floor(paraphraseSentences.length / 2)); i++) {
+                  const idx1 = Math.floor(Math.random() * paraphraseSentences.length);
+                  const idx2 = Math.floor(Math.random() * paraphraseSentences.length);
+                  [newSentences[idx1], newSentences[idx2]] = [newSentences[idx2], newSentences[idx1]];
+                }
+                result.processedText = newSentences.map(s => s.trim() + '.').join(' ');
+              } else {
+                // For single sentences, reverse parts around commas or conjunctions
+                const parts = text.split(/,|\sand\s|\sor\s|\sbut\s/);
+                if (parts.length > 1) {
+                  result.processedText = parts.reverse().join(', ');
+                } else {
+                  // Last resort: change active/passive voice crudely
+                  if (text.match(/\b(is|are|was|were)\b/)) {
+                    result.processedText = text.replace(/\b(is|are|was|were)\b/, 'has been');
+                  } else {
+                    const words = text.split(' ');
+                    const newWords = [...words];
+                    // Just swap some words as last resort
+                    for (let i = 0; i < Math.min(3, Math.floor(words.length / 2)); i++) {
+                      const idx1 = Math.floor(Math.random() * words.length);
+                      const idx2 = Math.floor(Math.random() * words.length);
+                      [newWords[idx1], newWords[idx2]] = [newWords[idx2], newWords[idx1]];
+                    }
+                    result.processedText = newWords.join(' ');
+                  }
+                }
               }
-              result.processedText = newWords.join(' ');
+              result.similarity = calculateSimilarity(text, result.processedText);
+              break;
+              
+            case "humanize":
+              // Add more conversational elements and varied sentence structures
+              let humanizedText = text
+                .replace(/\b(furthermore|moreover|additionally)\b/gi, 'also')
+                .replace(/\b(utilize|utilization)\b/gi, 'use')
+                .replace(/\b(obtain)\b/gi, 'get')
+                .replace(/\b(require)\b/gi, 'need')
+                .replace(/\b(sufficient)\b/gi, 'enough')
+                .replace(/\b(nevertheless|nonetheless)\b/gi, 'still')
+                .replace(/\b(commence|initiate)\b/gi, 'start')
+                .replace(/\b(terminate)\b/gi, 'end')
+                .replace(/\b(endeavor)\b/gi, 'try')
+                .replace(/\b(inquire)\b/gi, 'ask');
+              
+              // Add some human touches
+              if (!humanizedText.includes('I think') && !humanizedText.includes('I believe')) {
+                humanizedText = 'I think ' + humanizedText.charAt(0).toLowerCase() + humanizedText.slice(1);
+              }
+              
+              // Add a conversational closer if it doesn't exist
+              if (!humanizedText.match(/\b(right|you know|anyway)\b/)) {
+                humanizedText += ", right?";
+              }
+              
+              result.processedText = humanizedText;
+              result.similarity = calculateSimilarity(text, result.processedText);
+              break;
+              
+            case "reword":
+              // Replace words with basic synonyms without changing structure
+              let rewordedText = text
+                .replace(/\b(big|large)\b/gi, 'substantial')
+                .replace(/\b(small|tiny)\b/gi, 'minimal')
+                .replace(/\b(good)\b/gi, 'excellent')
+                .replace(/\b(bad)\b/gi, 'poor')
+                .replace(/\b(happy)\b/gi, 'delighted')
+                .replace(/\b(sad)\b/gi, 'unhappy')
+                .replace(/\b(angry)\b/gi, 'furious')
+                .replace(/\b(fast|quick)\b/gi, 'rapid')
+                .replace(/\b(slow)\b/gi, 'gradual')
+                .replace(/\b(important)\b/gi, 'significant')
+                .replace(/\b(difficult|hard)\b/gi, 'challenging')
+                .replace(/\b(easy|simple)\b/gi, 'straightforward')
+                .replace(/\b(beautiful)\b/gi, 'gorgeous')
+                .replace(/\b(ugly)\b/gi, 'unattractive')
+                .replace(/\b(smart|intelligent)\b/gi, 'brilliant')
+                .replace(/\b(stupid)\b/gi, 'foolish')
+                .replace(/\b(rich)\b/gi, 'wealthy')
+                .replace(/\b(poor)\b/gi, 'impoverished')
+                .replace(/\b(old)\b/gi, 'aged')
+                .replace(/\b(new)\b/gi, 'recent')
+                .replace(/\b(like)\b/gi, 'appreciate')
+                .replace(/\b(hate)\b/gi, 'detest')
+                .replace(/\b(look)\b/gi, 'appear')
+                .replace(/\b(see)\b/gi, 'observe')
+                .replace(/\b(hear)\b/gi, 'listen to')
+                .replace(/\b(touch)\b/gi, 'contact')
+                .replace(/\b(smell)\b/gi, 'detect')
+                .replace(/\b(taste)\b/gi, 'savor');
+              
+              result.processedText = rewordedText;
+              result.similarity = calculateSimilarity(text, result.processedText);
+              break;
+              
+            case "rewriteParagraph":
+              // More comprehensive restructuring
+              const paragraphSentences = text.split(/[.!?]+/).filter(s => s.trim() !== '');
+              
+              if (paragraphSentences.length > 1) {
+                // For multiple sentences, combine some and reorder others
+                let rewrittenParagraph = "";
+                
+                // Mix sentence order and combine some
+                for (let i = 0; i < paragraphSentences.length; i++) {
+                  const s = paragraphSentences[i].trim();
+                  if (i < paragraphSentences.length - 1 && Math.random() > 0.5) {
+                    // Combine with next sentence
+                    const nextS = paragraphSentences[i+1].trim();
+                    rewrittenParagraph += s + " and " + nextS + ". ";
+                    i++; // Skip the next sentence as we've used it
+                  } else {
+                    rewrittenParagraph += s + ". ";
+                  }
+                }
+                
+                result.processedText = rewrittenParagraph.trim();
+              } else {
+                // For a single sentence, break it into multiple if possible
+                const fragments = text.split(/,|\sand\s|\sor\s|\sbut\s/);
+                if (fragments.length > 1) {
+                  result.processedText = fragments.map(f => f.trim().charAt(0).toUpperCase() + f.trim().slice(1) + '.').join(' ');
+                } else {
+                  // Can't do much with a simple sentence
+                  result.processedText = text;
+                }
+              }
+              
               result.similarity = calculateSimilarity(text, result.processedText);
               break;
             case "summarize":
               // Basic summary: take first sentence and last sentence
-              const sentences = text.split(/[.!?]+/).filter(s => s.trim() !== '');
-              if (sentences.length > 1) {
-                result.processedText = `${sentences[0].trim()}. ${sentences[sentences.length - 1].trim()}.`;
+              const summarySentences = text.split(/[.!?]+/).filter(s => s.trim() !== '');
+              if (summarySentences.length > 1) {
+                result.processedText = `${summarySentences[0].trim()}. ${summarySentences[summarySentences.length - 1].trim()}.`;
               } else {
                 result.processedText = text;
               }
@@ -164,8 +301,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If any error occurred, use basic fallback
         result = {
           processedText: text,
-          similarity: 100
+          similarity: 100,
+          issues: [] // Ensure issues property exists for all results
         };
+      }
+      
+      // Ensure all results have an issues property
+      if (!result.issues) {
+        result.issues = [];
       }
 
       // Calculate text statistics for the processed text
