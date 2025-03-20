@@ -48,7 +48,7 @@ async function generateText(text: string, instruction: string): Promise<string> 
   }
 }
 
-export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ processedText: string, similarity: number, issues?: Array<{
+export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ processedText: string, similarity: number, issues: Array<{
   type: 'grammar' | 'suggestion' | 'improvement';
   message: string;
   suggestion: string;
@@ -62,6 +62,8 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     
     if (mode === "formal") {
       instruction = "Paraphrase the following text into a formal and professional tone";
+    } else if (mode === "academic") {
+      instruction = "Paraphrase the following text using scholarly language, precise terminology, and an objective tone suitable for academic papers and essays";
     } else if (mode === "creative") {
       instruction = "Paraphrase the following text in a creative and engaging way";
     } else if (mode === "simplified") {
@@ -71,12 +73,13 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
     
-    return { processedText, similarity };
+    return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Paraphrasing error with Hugging Face:", error);
     return {
       processedText: `[Error] Failed to paraphrase text. ${text}`,
-      similarity: 100
+      similarity: 100,
+      issues: []
     };
   }
 }

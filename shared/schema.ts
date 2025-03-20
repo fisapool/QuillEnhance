@@ -112,3 +112,24 @@ export const textProcessingResultSchema = z.object({
 
 export type TextIssue = z.infer<typeof textIssueSchema>;
 export type TextProcessingResult = z.infer<typeof textProcessingResultSchema>;
+
+export const aiDetectionSchema = z.object({
+  text: z.string().min(1, 'Text is required for AI detection')
+});
+
+export const aiDetectionResultSchema = z.object({
+  aiProbability: z.number().min(0).max(100),
+  humanProbability: z.number().min(0).max(100),
+  confidence: z.number().min(0).max(100),
+  textStatistics: z.object({
+    repetitivePatterns: z.number().min(0).max(100),
+    linguisticVariation: z.number().min(0).max(100),
+    naturalFlow: z.number().min(0).max(100),
+    creativityScore: z.number().min(0).max(100)
+  }),
+  detectionExplanation: z.string(),
+  improvementSuggestions: z.array(z.string())
+});
+
+export type AIDetectionRequest = z.infer<typeof aiDetectionSchema>;
+export type AIDetectionResult = z.infer<typeof aiDetectionResultSchema>;

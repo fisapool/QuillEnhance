@@ -9,7 +9,11 @@ import {
   detectBasicGrammarIssues, 
   calculateSimilarity 
 } from "./nlp";
-import { textProcessingSchema } from "@shared/schema";
+import { detectAIContent } from "./aiDetector";
+import { 
+  textProcessingSchema, 
+  aiDetectionSchema 
+} from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 

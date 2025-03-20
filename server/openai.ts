@@ -22,6 +22,7 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
   const modeInstructions = {
     standard: "Maintain a balance between originality and preserving meaning",
     formal: "Use formal language, academic tone, and professional vocabulary",
+    academic: "Follow strict academic writing conventions with formal structure, citations, precise terminology, and an objective tone suitable for scholarly papers. Incorporate language appropriate for academic journals and educational contexts.",
     creative: "Use creative language with unique expressions while preserving core meaning",
     simplified: "Simplify the text to make it easier to understand while preserving key information"
   };
