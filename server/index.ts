@@ -6,6 +6,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Log which AI service we're using
+const usingHuggingFace = !process.env.OPENAI_API_KEY || process.env.PREFER_HUGGINGFACE === 'true';
+log(`Using ${usingHuggingFace ? 'Hugging Face' : 'OpenAI'} for AI services`);
+if (usingHuggingFace) {
+  log('Hugging Face services are free to use without a credit card');
+  if (process.env.HUGGINGFACE_API_KEY) {
+    log('Using provided Hugging Face API key for higher rate limits');
+  } else {
+    log('Using Hugging Face free tier (no API key required)');
+  }
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

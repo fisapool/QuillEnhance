@@ -1,16 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
-  paraphraseText, 
-  humanizeAIText, 
-  rewordText, 
-  rewriteParagraph, 
-  summarizeText, 
-  translateText, 
-  checkGrammar,
-  analyzeText
-} from "./openai";
+// Import both OpenAI and Hugging Face implementations
+import * as openai from "./openai";
+import * as huggingface from "./huggingface";
 import { 
   calculateTextStatistics, 
   detectBasicGrammarIssues, 
@@ -19,6 +12,61 @@ import {
 import { textProcessingSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+
+// Helper function to determine which API to use
+function useHuggingFace(): boolean {
+  // Check if OpenAI API key is missing or if PREFER_HUGGINGFACE is set
+  return !process.env.OPENAI_API_KEY || process.env.PREFER_HUGGINGFACE === 'true';
+}
+
+// Helper functions to choose the appropriate implementation
+function paraphraseText(text: string, mode?: string) {
+  return useHuggingFace() 
+    ? huggingface.paraphraseText(text, mode)
+    : openai.paraphraseText(text, mode);
+}
+
+function humanizeAIText(text: string) {
+  return useHuggingFace()
+    ? huggingface.humanizeAIText(text)
+    : openai.humanizeAIText(text);
+}
+
+function rewordText(text: string) {
+  return useHuggingFace()
+    ? huggingface.rewordText(text)
+    : openai.rewordText(text);
+}
+
+function rewriteParagraph(text: string) {
+  return useHuggingFace()
+    ? huggingface.rewriteParagraph(text)
+    : openai.rewriteParagraph(text);
+}
+
+function summarizeText(text: string) {
+  return useHuggingFace()
+    ? huggingface.summarizeText(text)
+    : openai.summarizeText(text);
+}
+
+function translateText(text: string, targetLanguage: string) {
+  return useHuggingFace()
+    ? huggingface.translateText(text, targetLanguage)
+    : openai.translateText(text, targetLanguage);
+}
+
+function checkGrammar(text: string) {
+  return useHuggingFace()
+    ? huggingface.checkGrammar(text)
+    : openai.checkGrammar(text);
+}
+
+function analyzeText(text: string) {
+  return useHuggingFace()
+    ? huggingface.analyzeText(text)
+    : openai.analyzeText(text);
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Text processing endpoint
