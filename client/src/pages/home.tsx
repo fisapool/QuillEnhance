@@ -18,12 +18,12 @@ const Home: React.FC = () => {
   const [processedHtml, setProcessedHtml] = useState<string>('');
   const [activeIssue, setActiveIssue] = useState<TextIssue | null>(null);
   const [issuePosition, setIssuePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  
+
   // State for tools and options
   const [activeTool, setActiveTool] = useState<ProcessType>('paraphrase');
   const [processingMode, setProcessingMode] = useState<string>('standard');
   const [targetLanguage, setTargetLanguage] = useState<string>('Spanish');
-  
+
   // Process text and analysis hooks
   const { 
     processText, 
@@ -32,14 +32,14 @@ const Home: React.FC = () => {
     error: processingError, 
     result: processingResult 
   } = useTextProcessing();
-  
+
   const { 
     analyzeText, 
     isAnalyzing, 
     error: analysisError, 
     analysis 
   } = useAnalysis();
-  
+
   // Text statistics state
   const [originalStats, setOriginalStats] = useState({
     words: 0,
@@ -49,7 +49,7 @@ const Home: React.FC = () => {
     readingTime: 0,
     speakingTime: 0
   });
-  
+
   // Computed properties
   const toolTitle = {
     paraphrase: 'Paraphrasing Tool',
@@ -60,7 +60,7 @@ const Home: React.FC = () => {
     grammarCheck: 'Grammar Checker',
     translate: 'Translation Tool'
   };
-  
+
   const toolDescription = {
     paraphrase: 'Rewrite your text while maintaining the original meaning',
     humanize: 'Make AI-generated text sound more natural and human',
@@ -70,7 +70,7 @@ const Home: React.FC = () => {
     grammarCheck: 'Check grammar, spelling, and punctuation',
     translate: 'Translate your text to another language'
   };
-  
+
   // Update word count when original text changes
   useEffect(() => {
     if (originalText) {
@@ -90,14 +90,14 @@ const Home: React.FC = () => {
       });
     }
   }, [originalText]);
-  
+
   // Update text analysis when original text or processed text changes
   useEffect(() => {
     if (originalText && originalText.trim().length > 10) {
       analyzeText(originalText);
     }
   }, [originalText]);
-  
+
   // Convert processed text to HTML with highlights
   useEffect(() => {
     if (processingResult?.processedText) {
@@ -108,54 +108,54 @@ const Home: React.FC = () => {
       setProcessedHtml('');
     }
   }, [processingResult]);
-  
+
   // Handle processing
   const handleProcessText = async () => {
     if (!originalText.trim()) return;
-    
+
     const options: ProcessingOptions = {};
-    
+
     if (activeTool === 'paraphrase') {
       options.mode = processingMode as any;
     } else if (activeTool === 'translate') {
       options.targetLanguage = targetLanguage;
     }
-    
+
     const result = await processText(originalText, activeTool, options);
-    
+
     if (result) {
       // Since we got a successful result, analyze the processed text too
       analyzeText(result.processedText);
     }
   };
-  
+
   // Handle tool change
   const handleToolChange = (tool: ProcessType) => {
     setActiveTool(tool);
   };
-  
+
   // Handle mode change
   const handleModeChange = (mode: string) => {
     setProcessingMode(mode);
   };
-  
+
   // Handle target language change
   const handleLanguageChange = (language: string) => {
     setTargetLanguage(language);
   };
-  
+
   // Copy processed text to clipboard
   const copyToClipboard = () => {
     if (processingResult?.processedText) {
       navigator.clipboard.writeText(processingResult.processedText);
     }
   };
-  
+
   // Regenerate processed text
   const regenerateText = () => {
     handleProcessText();
   };
-  
+
   // Handle correction suggestion
   const handleCorrectionClick = (issue: TextIssue, event: React.MouseEvent) => {
     setActiveIssue(issue);
@@ -164,26 +164,26 @@ const Home: React.FC = () => {
       y: event.clientY + 20 // Position below the click
     });
   };
-  
+
   // Apply suggestion
   const applyCorrection = (suggestion: string) => {
     // In a real implementation, you would apply the suggestion to the text
     setActiveIssue(null);
   };
-  
+
   // Ignore suggestion
   const ignoreCorrection = () => {
     setActiveIssue(null);
   };
-  
+
   return (
     <div className="flex flex-col h-screen">
       <Header />
-      
+
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         {/* Sidebar */}
         <Sidebar activeTool={activeTool} onSelectTool={handleToolChange} />
-        
+
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden bg-gray-50">
           {/* Tool Controls */}
@@ -193,7 +193,7 @@ const Home: React.FC = () => {
                 <h2 className="text-xl font-semibold">{toolTitle[activeTool]}</h2>
                 <p className="text-gray-500 text-sm">{toolDescription[activeTool]}</p>
               </div>
-              
+
               <div className="flex items-center space-x-3">
                 {activeTool === 'paraphrase' && (
                   <div className="flex items-center">
@@ -205,13 +205,14 @@ const Home: React.FC = () => {
                       <SelectContent>
                         <SelectItem value="standard">Standard</SelectItem>
                         <SelectItem value="formal">Formal</SelectItem>
+                        <SelectItem value="academic">Academic</SelectItem>
                         <SelectItem value="creative">Creative</SelectItem>
                         <SelectItem value="simplified">Simplified</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 )}
-                
+
                 {activeTool === 'translate' && (
                   <div className="flex items-center">
                     <span className="text-sm font-medium mr-2">Language:</span>
@@ -229,7 +230,7 @@ const Home: React.FC = () => {
                     </Select>
                   </div>
                 )}
-                
+
                 <Button 
                   className="bg-primary hover:bg-primary/90 text-white"
                   onClick={handleProcessText}
@@ -247,7 +248,7 @@ const Home: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Text Editors */}
           <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
             {/* Original Text Panel */}
@@ -258,7 +259,7 @@ const Home: React.FC = () => {
               readOnly={false}
               statistics={originalStats}
             />
-            
+
             {/* Processed Text Panel */}
             <TextEditorPanel
               title="Processed Text"
@@ -282,11 +283,11 @@ const Home: React.FC = () => {
             />
           </div>
         </main>
-        
+
         {/* Analysis Panel */}
         <AnalysisPanel analysis={analysis} isLoading={isAnalyzing} />
       </div>
-      
+
       {/* Floating Correction Popover */}
       {activeIssue && (
         <FloatingCorrection 
@@ -296,7 +297,7 @@ const Home: React.FC = () => {
           onIgnore={ignoreCorrection}
         />
       )}
-      
+
       {/* Loading Overlay */}
       <LoadingOverlay 
         isVisible={isProcessing} 
