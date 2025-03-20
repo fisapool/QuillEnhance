@@ -9,6 +9,11 @@ export function useAnalysis() {
 
   const analyzeText = async (text: string): Promise<TextAnalysis | null> => {
     try {
+      if (!text.trim()) {
+        setAnalysis(null);
+        return null;
+      }
+
       setIsAnalyzing(true);
       setError(null);
 
