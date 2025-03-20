@@ -1,4 +1,3 @@
-// Assuming this is within a React component, and cn is imported from a library like classnames
 indicatorclassname={cn(
   styles.indicator,
   {
