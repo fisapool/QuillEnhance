@@ -4,6 +4,7 @@ import { storage } from "./storage";
 // Import both OpenAI and Hugging Face implementations
 import * as openai from "./openai";
 import * as huggingface from "./huggingface";
+import * as gemini from "./gemini"; // Added Gemini import
 import { 
   calculateTextStatistics, 
   detectBasicGrammarIssues, 
@@ -40,12 +41,12 @@ async function paraphraseText(text: string, mode?: string): Promise<{
   const result = useHuggingFace() 
     ? await huggingface.paraphraseText(text, mode)
     : await openai.paraphraseText(text, mode);
-  
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -65,12 +66,12 @@ async function humanizeAIText(text: string): Promise<{
   const result = useHuggingFace()
     ? await huggingface.humanizeAIText(text)
     : await openai.humanizeAIText(text);
-  
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -90,12 +91,12 @@ async function rewordText(text: string): Promise<{
   const result = useHuggingFace()
     ? await huggingface.rewordText(text)
     : await openai.rewordText(text);
-  
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -115,12 +116,12 @@ async function rewriteParagraph(text: string): Promise<{
   const result = useHuggingFace()
     ? await huggingface.rewriteParagraph(text)
     : await openai.rewriteParagraph(text);
-  
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -140,12 +141,12 @@ async function summarizeText(text: string): Promise<{
   const result = useHuggingFace()
     ? await huggingface.summarizeText(text)
     : await openai.summarizeText(text);
-  
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -162,15 +163,13 @@ async function translateText(text: string, targetLanguage: string): Promise<{
     };
   }>;
 }> {
-  const result = useHuggingFace()
-    ? await huggingface.translateText(text, targetLanguage)
-    : await openai.translateText(text, targetLanguage);
-  
+  const result = await gemini.translateText(text, targetLanguage); // Using Gemini API
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -190,12 +189,12 @@ async function checkGrammar(text: string): Promise<{
   const result = useHuggingFace()
     ? await huggingface.checkGrammar(text)
     : await openai.checkGrammar(text);
-  
+
   // Ensure the result has an issues array
   if (!result.issues) {
     result.issues = [];
   }
-  
+
   return result;
 }
 
@@ -211,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = textProcessingSchema.parse(req.body);
       const { text, processType, options } = validatedData;
-      
+
       // Basic validation for empty text
       if (!text.trim()) {
         return res.status(400).json({ message: "Text cannot be empty" });
@@ -234,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         processedText: text,
         issues: []
       };
-      
+
       // Process text based on the process type
       try {
         switch (processType) {
@@ -265,12 +264,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           default:
             return res.status(400).json({ message: "Invalid process type" });
         }
-        
+
         // Check if we got an error response
         if (result.processedText && result.processedText.startsWith('[Error]')) {
           // Use basic fallback processing
           console.log('Using basic fallback processing');
-          
+
           // Simple fallback implementations
           switch (processType) {
             case "paraphrase":
@@ -309,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               }
               result.similarity = calculateSimilarity(text, result.processedText);
               break;
-              
+
             case "humanize":
               // Add more conversational elements and varied sentence structures
               let humanizedText = text
@@ -323,21 +322,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 .replace(/\b(terminate)\b/gi, 'end')
                 .replace(/\b(endeavor)\b/gi, 'try')
                 .replace(/\b(inquire)\b/gi, 'ask');
-              
+
               // Add some human touches
               if (!humanizedText.includes('I think') && !humanizedText.includes('I believe')) {
                 humanizedText = 'I think ' + humanizedText.charAt(0).toLowerCase() + humanizedText.slice(1);
               }
-              
+
               // Add a conversational closer if it doesn't exist
               if (!humanizedText.match(/\b(right|you know|anyway)\b/)) {
                 humanizedText += ", right?";
               }
-              
+
               result.processedText = humanizedText;
               result.similarity = calculateSimilarity(text, result.processedText);
               break;
-              
+
             case "reword":
               // Replace words with basic synonyms without changing structure
               let rewordedText = text
@@ -369,19 +368,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 .replace(/\b(touch)\b/gi, 'contact')
                 .replace(/\b(smell)\b/gi, 'detect')
                 .replace(/\b(taste)\b/gi, 'savor');
-              
+
               result.processedText = rewordedText;
               result.similarity = calculateSimilarity(text, result.processedText);
               break;
-              
+
             case "rewriteParagraph":
               // More comprehensive restructuring
               const paragraphSentences = text.split(/[.!?]+/).filter(s => s.trim() !== '');
-              
+
               if (paragraphSentences.length > 1) {
                 // For multiple sentences, combine some and reorder others
                 let rewrittenParagraph = "";
-                
+
                 // Mix sentence order and combine some
                 for (let i = 0; i < paragraphSentences.length; i++) {
                   const s = paragraphSentences[i].trim();
@@ -394,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     rewrittenParagraph += s + ". ";
                   }
                 }
-                
+
                 result.processedText = rewrittenParagraph.trim();
               } else {
                 // For a single sentence, break it into multiple if possible
@@ -406,7 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   result.processedText = text;
                 }
               }
-              
+
               result.similarity = calculateSimilarity(text, result.processedText);
               break;
             case "summarize":
@@ -442,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           issues: [] // Ensure issues property exists for all results
         };
       }
-      
+
       // Ensure all results have an issues property
       if (!result.issues) {
         result.issues = [];
@@ -451,7 +450,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate text statistics for the processed text
       const originalStats = calculateTextStatistics(text);
       const processedStats = calculateTextStatistics(result.processedText);
-      
+
       // Calculate similarity if not already provided
       const similarity = ('similarity' in result && result.similarity !== undefined) 
         ? result.similarity 
@@ -469,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const validationError = fromZodError(error);
         return res.status(400).json({ message: validationError.message });
       }
-      
+
       console.error("Text processing error:", error);
       return res.status(500).json({ message: "Failed to process text" });
     }
@@ -480,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 app.post("/api/check-compliance", async (req, res) => {
   try {
     const { text } = req.body;
-    
+
     if (!text || !text.trim()) {
       return res.status(400).json({ message: "Text is required" });
     }
@@ -496,17 +495,17 @@ app.post("/api/check-compliance", async (req, res) => {
 app.post("/api/analyze-text", async (req, res) => {
     try {
       const { text } = req.body;
-      
+
       if (!text || !text.trim()) {
         return res.status(400).json({ message: "Text is required" });
       }
 
       // Get basic text statistics
       const statistics = calculateTextStatistics(text);
-      
+
       // Detect basic grammar issues as a fallback
       const basicIssues = detectBasicGrammarIssues(text);
-      
+
       // Use OpenAI for deeper analysis
       let analysisResult = {
         readability: 0,
@@ -520,7 +519,7 @@ app.post("/api/analyze-text", async (req, res) => {
       try {
         // Try to get enhanced analysis from OpenAI
         const aiAnalysis = await analyzeText(text);
-        
+
         // Merge OpenAI analysis with our basic statistics
         analysisResult = {
           ...aiAnalysis,
@@ -547,7 +546,7 @@ app.post("/api/analyze-text", async (req, res) => {
     try {
       const validatedData = aiDetectionSchema.parse(req.body);
       const { text } = validatedData;
-      
+
       if (!text || !text.trim()) {
         return res.status(400).json({ message: "Text is required" });
       }
@@ -577,7 +576,7 @@ app.post("/api/analyze-text", async (req, res) => {
   app.post("/api/word-count", (req, res) => {
     try {
       const { text } = req.body;
-      
+
       if (!text) {
         return res.status(400).json({ message: "Text is required" });
       }

@@ -57,3 +57,28 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     };
   }
 }
+export async function translateText(text: string, targetLanguage: string): Promise<{ processedText: string, similarity: number, issues: any[] }> {
+  try {
+    const prompt = `Translate this text to ${targetLanguage}:\n\n${text}\n\nTranslation:`;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const translation = response.text().trim();
+    
+    return {
+      processedText: translation,
+      similarity: 0, // Translation similarity doesn't make sense between languages
+      issues: []
+    };
+  } catch (error) {
+    console.error('Gemini translation error:', error);
+    return {
+      processedText: text,
+      similarity: 100,
+      issues: [{
+        type: 'error',
+        message: 'Translation failed',
+        suggestion: 'Please try again later'
+      }]
+    };
+  }
+}
