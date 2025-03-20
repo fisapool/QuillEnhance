@@ -226,6 +226,7 @@ const Home: React.FC = () => {
                         <SelectItem value="German">German</SelectItem>
                         <SelectItem value="Chinese">Chinese</SelectItem>
                         <SelectItem value="Japanese">Japanese</SelectItem>
+                        <SelectItem value="Malay">Bahasa Melayu</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
