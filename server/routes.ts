@@ -170,16 +170,35 @@ async function translateText(text: string, targetLanguage: string): Promise<{
   return result;
 }
 
-function checkGrammar(text: string) {
-  return useHuggingFace()
-    ? huggingface.checkGrammar(text)
-    : openai.checkGrammar(text);
+async function checkGrammar(text: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace()
+    ? await huggingface.checkGrammar(text)
+    : await openai.checkGrammar(text);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
-function analyzeText(text: string) {
+async function analyzeText(text: string) {
   return useHuggingFace()
-    ? huggingface.analyzeText(text)
-    : openai.analyzeText(text);
+    ? await huggingface.analyzeText(text)
+    : await openai.analyzeText(text);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {

@@ -3,7 +3,19 @@ import OpenAI from "openai";
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 
-export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ processedText: string, similarity: number }> {
+export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ 
+  processedText: string, 
+  similarity: number,
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
   const modeInstructions = {
     standard: "Maintain a balance between originality and preserving meaning",
     formal: "Use formal language, academic tone, and professional vocabulary",
@@ -42,7 +54,8 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     
     return {
       processedText: result.processedText || "",
-      similarity: result.similarity || 70
+      similarity: result.similarity || 70,
+      issues: []
     };
   } catch (error: any) {
     console.error("Paraphrasing error:", error.message);
@@ -67,7 +80,19 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
   }
 }
 
-export async function humanizeAIText(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function humanizeAIText(text: string): Promise<{ 
+  processedText: string, 
+  similarity?: number,
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
