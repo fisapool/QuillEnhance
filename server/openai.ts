@@ -3,9 +3,10 @@ import OpenAI from "openai";
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 
-export async function paraphraseText(text: string, mode: string = "standard"): Promise<{ 
-  processedText: string, 
-  similarity: number,
+// Define a shared type for text processing results
+type TextProcessingResult = {
+  processedText: string;
+  similarity?: number;
   issues: Array<{
     type: 'grammar' | 'suggestion' | 'improvement';
     message: string;
@@ -15,7 +16,9 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
       end: number;
     };
   }>;
-}> {
+};
+
+export async function paraphraseText(text: string, mode: string = "standard"): Promise<TextProcessingResult> {
   const modeInstructions = {
     standard: "Maintain a balance between originality and preserving meaning",
     formal: "Use formal language, academic tone, and professional vocabulary",
@@ -30,7 +33,8 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
       // Return a fallback response if API key is missing
       return {
         processedText: `[OpenAI API key missing] ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
 
@@ -64,7 +68,8 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     if (error.message.includes("429") || error.message.includes("exceeded your current quota")) {
       return {
         processedText: `[API quota exceeded] Unable to process text with OpenAI. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -72,7 +77,8 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     if (error.message.includes("OpenAI")) {
       return {
         processedText: `[OpenAI API error] Unable to process text: ${error.message}. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -80,26 +86,15 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
   }
 }
 
-export async function humanizeAIText(text: string): Promise<{ 
-  processedText: string, 
-  similarity?: number,
-  issues: Array<{
-    type: 'grammar' | 'suggestion' | 'improvement';
-    message: string;
-    suggestion: string;
-    position?: {
-      start: number;
-      end: number;
-    };
-  }>;
-}> {
+export async function humanizeAIText(text: string): Promise<TextProcessingResult> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
       console.error("OpenAI API key is not set");
       return {
         processedText: `[OpenAI API key missing] ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
 
@@ -122,7 +117,8 @@ export async function humanizeAIText(text: string): Promise<{
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     return {
-      processedText: result.processedText || ""
+      processedText: result.processedText || "",
+      issues: []
     };
   } catch (error: any) {
     console.error("Humanizing error:", error.message);
@@ -131,7 +127,8 @@ export async function humanizeAIText(text: string): Promise<{
     if (error.message.includes("429") || error.message.includes("exceeded your current quota")) {
       return {
         processedText: `[API quota exceeded] Unable to process text with OpenAI. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -139,7 +136,8 @@ export async function humanizeAIText(text: string): Promise<{
     if (error.message.includes("OpenAI")) {
       return {
         processedText: `[OpenAI API error] Unable to process text: ${error.message}. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -147,14 +145,15 @@ export async function humanizeAIText(text: string): Promise<{
   }
 }
 
-export async function rewordText(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function rewordText(text: string): Promise<TextProcessingResult> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
       console.error("OpenAI API key is not set");
       return {
         processedText: `[OpenAI API key missing] ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
 
@@ -177,7 +176,8 @@ export async function rewordText(text: string): Promise<{ processedText: string,
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     return {
-      processedText: result.processedText || ""
+      processedText: result.processedText || "",
+      issues: []
     };
   } catch (error: any) {
     console.error("Rewording error:", error.message);
@@ -186,7 +186,8 @@ export async function rewordText(text: string): Promise<{ processedText: string,
     if (error.message.includes("429") || error.message.includes("exceeded your current quota")) {
       return {
         processedText: `[API quota exceeded] Unable to process text with OpenAI. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -194,7 +195,8 @@ export async function rewordText(text: string): Promise<{ processedText: string,
     if (error.message.includes("OpenAI")) {
       return {
         processedText: `[OpenAI API error] Unable to process text: ${error.message}. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -202,14 +204,15 @@ export async function rewordText(text: string): Promise<{ processedText: string,
   }
 }
 
-export async function rewriteParagraph(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function rewriteParagraph(text: string): Promise<TextProcessingResult> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
       console.error("OpenAI API key is not set");
       return {
         processedText: `[OpenAI API key missing] ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
 
@@ -232,7 +235,8 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     return {
-      processedText: result.processedText || ""
+      processedText: result.processedText || "",
+      issues: []
     };
   } catch (error: any) {
     console.error("Paragraph rewriting error:", error.message);
@@ -241,7 +245,8 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
     if (error.message.includes("429") || error.message.includes("exceeded your current quota")) {
       return {
         processedText: `[API quota exceeded] Unable to process text with OpenAI. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -249,7 +254,8 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
     if (error.message.includes("OpenAI")) {
       return {
         processedText: `[OpenAI API error] Unable to process text: ${error.message}. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -257,14 +263,15 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
   }
 }
 
-export async function summarizeText(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function summarizeText(text: string): Promise<TextProcessingResult> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
       console.error("OpenAI API key is not set");
       return {
         processedText: `[OpenAI API key missing] ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
 
@@ -287,7 +294,8 @@ export async function summarizeText(text: string): Promise<{ processedText: stri
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     return {
-      processedText: result.processedText || ""
+      processedText: result.processedText || "",
+      issues: []
     };
   } catch (error: any) {
     console.error("Summarizing error:", error.message);
@@ -296,7 +304,8 @@ export async function summarizeText(text: string): Promise<{ processedText: stri
     if (error.message.includes("429") || error.message.includes("exceeded your current quota")) {
       return {
         processedText: `[API quota exceeded] Unable to process text with OpenAI. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -304,7 +313,8 @@ export async function summarizeText(text: string): Promise<{ processedText: stri
     if (error.message.includes("OpenAI")) {
       return {
         processedText: `[OpenAI API error] Unable to process text: ${error.message}. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -312,14 +322,15 @@ export async function summarizeText(text: string): Promise<{ processedText: stri
   }
 }
 
-export async function translateText(text: string, targetLanguage: string): Promise<{ processedText: string, similarity?: number }> {
+export async function translateText(text: string, targetLanguage: string): Promise<TextProcessingResult> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
       console.error("OpenAI API key is not set");
       return {
         processedText: `[OpenAI API key missing] ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
 
@@ -342,7 +353,8 @@ export async function translateText(text: string, targetLanguage: string): Promi
     const result = JSON.parse(response.choices[0].message.content || "{}");
     
     return {
-      processedText: result.processedText || ""
+      processedText: result.processedText || "",
+      issues: []
     };
   } catch (error: any) {
     console.error("Translation error:", error.message);
@@ -351,7 +363,8 @@ export async function translateText(text: string, targetLanguage: string): Promi
     if (error.message.includes("429") || error.message.includes("exceeded your current quota")) {
       return {
         processedText: `[API quota exceeded] Unable to process text with OpenAI. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -359,7 +372,8 @@ export async function translateText(text: string, targetLanguage: string): Promi
     if (error.message.includes("OpenAI")) {
       return {
         processedText: `[OpenAI API error] Unable to process text: ${error.message}. ${text}`,
-        similarity: 100
+        similarity: 100,
+        issues: []
       };
     }
     
@@ -367,7 +381,7 @@ export async function translateText(text: string, targetLanguage: string): Promi
   }
 }
 
-export async function checkGrammar(text: string): Promise<{ processedText: string, issues: any[], similarity?: number }> {
+export async function checkGrammar(text: string): Promise<TextProcessingResult> {
   try {
     // Check if the OpenAI API key is set
     if (!process.env.OPENAI_API_KEY) {
