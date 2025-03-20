@@ -476,7 +476,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analyze text endpoint
-  app.post("/api/analyze-text", async (req, res) => {
+  // Compliance check endpoint
+app.post("/api/check-compliance", async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Text is required" });
+    }
+
+    const complianceResult = await checkContentCompliance(text);
+    return res.json(complianceResult);
+  } catch (error) {
+    console.error("Compliance check error:", error);
+    return res.status(500).json({ message: "Failed to check content compliance" });
+  }
+});
+
+app.post("/api/analyze-text", async (req, res) => {
     try {
       const { text } = req.body;
       
