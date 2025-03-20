@@ -1,15 +1,14 @@
 import { HfInference } from '@huggingface/inference';
 import { calculateSimilarity } from './nlp';
 
-// Create HF inference client with proper configuration
-// We explicitly pass empty string to make it use API without authentication
-const hf = new HfInference('');
+// Create HF inference client with API key
+const hf = new HfInference(process.env.HUGGING_FACE_API_KEY || '');
 
-// Model IDs for different tasks
-// These models are smaller and accessible without authentication
-const TEXT_GENERATION_MODEL = 'gpt2'; // Available without authentication 
-const SUMMARIZATION_MODEL = 'sshleifer/distilbart-cnn-12-6'; // Smaller accessible version
-const TRANSLATION_MODEL = 'google/flan-t5-small'; // General purpose text model
+// Better models for each task
+const TEXT_GENERATION_MODEL = 'meta-llama/Llama-2-7b-chat-hf';
+const SUMMARIZATION_MODEL = 'facebook/bart-large-cnn';
+const TRANSLATION_MODEL = 'facebook/mbart-large-50-many-to-many-mmt';
+const PARAPHRASE_MODEL = 'tuner007/pegasus_paraphrase';
 
 /**
  * Process text using Hugging Face models
