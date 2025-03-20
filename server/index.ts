@@ -13,12 +13,11 @@ app.use(express.urlencoded({ extended: false }));
 // Log which AI service we're using
 const usingClaude = process.env.CLAUDE_API_KEY;
 const usingHuggingFace = !process.env.OPENAI_API_KEY || process.env.PREFER_HUGGINGFACE === 'true';
-
-if (usingClaude) {
-  log('Using Claude API for AI services');
-} else {
-  log(`Using ${usingHuggingFace ? 'Hugging Face' : 'OpenAI'} for AI services`);
-  if (usingHuggingFace && !process.env.HUGGING_FACE_API_KEY) {
+log(`Using ${usingClaude ? 'Claude' : usingHuggingFace ? 'Hugging Face' : 'OpenAI'} for AI services`);
+if (usingHuggingFace) {
+  if (process.env.HUGGING_FACE_API_KEY) {
+    log('Using provided Hugging Face API key for higher rate limits');
+  } else {
     log('Warning: HUGGING_FACE_API_KEY not set, falling back to basic processing');
   }
 }
