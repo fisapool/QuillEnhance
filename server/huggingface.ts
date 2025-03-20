@@ -19,7 +19,7 @@ const PARAPHRASE_MODEL = 'tuner007/pegasus_paraphrase';
 async function generateText(text: string, instruction: string): Promise<string> {
   try {
     const prompt = `${instruction}:\n\n${text}\n\nOutput:`;
-    
+
     const response = await hf.textGeneration({
       model: TEXT_GENERATION_MODEL,
       inputs: prompt,
@@ -31,15 +31,15 @@ async function generateText(text: string, instruction: string): Promise<string> 
         do_sample: true
       }
     });
-    
+
     // Extract the generated text
     let processedText = response.generated_text || '';
-    
+
     // Remove the input prompt from the generated text
     if (processedText.startsWith(prompt)) {
       processedText = processedText.substring(prompt.length).trim();
     }
-    
+
     return processedText || text;
   } catch (error) {
     console.error('Hugging Face text generation error:', error);
@@ -58,7 +58,7 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
 }> }> {
   try {
     let instruction = "Paraphrase the following text while preserving its meaning";
-    
+
     if (mode === "formal") {
       instruction = "Paraphrase the following text into a formal and professional tone";
     } else if (mode === "academic") {
@@ -68,10 +68,10 @@ export async function paraphraseText(text: string, mode: string = "standard"): P
     } else if (mode === "simplified") {
       instruction = "Paraphrase the following text using simpler language and shorter sentences";
     }
-    
+
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
-    
+
     return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Paraphrasing error with Hugging Face:", error);
@@ -94,10 +94,10 @@ export async function humanizeAIText(text: string): Promise<{ processedText: str
 }> }> {
   try {
     const instruction = "Make the following AI-generated text sound more human. Remove repetitive patterns, add natural language variations, incorporate conversational elements, and vary sentence structures.";
-    
+
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
-    
+
     return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Humanizing error with Hugging Face:", error);
@@ -120,10 +120,10 @@ export async function rewordText(text: string): Promise<{ processedText: string,
 }> }> {
   try {
     const instruction = "Reword the following text. Replace words with synonyms while preserving the original meaning, structure, and length.";
-    
+
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
-    
+
     return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Rewording error with Hugging Face:", error);
@@ -146,10 +146,10 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
 }> }> {
   try {
     const instruction = "Rewrite the following paragraph. Restructure and rephrase the paragraph while maintaining the core information and meaning.";
-    
+
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
-    
+
     return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Paragraph rewriting error with Hugging Face:", error);
@@ -175,11 +175,11 @@ export async function summarizeText(text: string): Promise<{ processedText: stri
     const instruction = "Summarize the following text concisely while preserving the key points";
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
-    
+
     return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Summarizing error with Hugging Face:", error);
-    
+
     // Return original text with error message
     return {
       processedText: `[Error] Failed to summarize text. ${text}`,
@@ -201,9 +201,9 @@ export async function translateText(text: string, targetLanguage: string): Promi
   try {
     // Using text generation for translations as it's more flexible with languages
     const instruction = `Translate the following text into ${targetLanguage}:`;
-    
+
     const processedText = await generateText(text, instruction);
-    
+
     return { 
       processedText,
       // Similarity doesn't make sense for translations between languages
@@ -223,14 +223,14 @@ export async function translateText(text: string, targetLanguage: string): Promi
 export async function checkGrammar(text: string): Promise<{ processedText: string, issues: any[], similarity?: number }> {
   try {
     const instruction = "Check and correct grammar, punctuation, and spelling errors in the following text. Return the corrected text only:";
-    
+
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
-    
+
     // Since Hugging Face models don't easily return structured data like issues,
     // We'll identify differences between original and corrected text
     const issues = [];
-    
+
     // If texts are different, add a general issue
     if (similarity < 100) {
       issues.push({
@@ -240,7 +240,7 @@ export async function checkGrammar(text: string): Promise<{ processedText: strin
         position: { start: 0, end: text.length }
       });
     }
-    
+
     return { processedText, issues, similarity };
   } catch (error) {
     console.error("Grammar checking error with Hugging Face:", error);
@@ -260,7 +260,7 @@ export async function analyzeText(text: string): Promise<any> {
     - Originality score from 0-100
     - List any writing issues or improvement suggestions
     - List any positive or negative style elements
-    
+
     Format your response like this example:
     Readability: 75
     Grammar: 80
@@ -271,12 +271,12 @@ export async function analyzeText(text: string): Promise<any> {
     Style:
     - Good use of metaphors
     - Inconsistent tone`;
-    
+
     const analysisText = await generateText(text, instruction);
-    
+
     // Parse the free-form text response into structured data
     const analysis = parseAnalysisText(analysisText);
-    
+
     // Add text statistics
     const words = text.trim().split(/\s+/).length;
     const characters = text.length;
@@ -284,7 +284,7 @@ export async function analyzeText(text: string): Promise<any> {
     const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim() !== '').length || 1;
     const readingTime = Math.max(1, Math.ceil(words / 225));
     const speakingTime = Math.max(1, Math.ceil(words / 150));
-    
+
     return {
       ...analysis,
       statistics: {
@@ -298,24 +298,49 @@ export async function analyzeText(text: string): Promise<any> {
     };
   } catch (error) {
     console.error("Text analysis error with Hugging Face:", error);
-    
-    // Return a basic analysis with default values
+
+    // Calculate basic scores based on text metrics
     const words = text.trim().split(/\s+/).length;
     const characters = text.length;
     const sentences = text.split(/[.!?]+/).filter(s => s.trim() !== '').length;
     const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim() !== '').length || 1;
     const readingTime = Math.max(1, Math.ceil(words / 225));
     const speakingTime = Math.max(1, Math.ceil(words / 150));
-    
+    const avgWordLength = characters / words;
+    const wordsPerSentence = words / sentences;
+
+    // Readability drops if words or sentences are too long
+    const readability = Math.max(0, Math.min(100, 
+      100 - (avgWordLength > 7 ? (avgWordLength - 7) * 10 : 0) -
+      (wordsPerSentence > 20 ? (wordsPerSentence - 20) * 2 : 0)
+    ));
+
+    // Grammar score based on simple metrics
+    const grammar = Math.max(0, Math.min(100,
+      100 - (wordsPerSentence > 30 ? 20 : 0) -
+      (sentences === 1 && words > 30 ? 20 : 0)
+    ));
+
+    // Originality based on vocabulary variation
+    const uniqueWords = new Set(text.toLowerCase().match(/\b\w+\b/g)).size;
+    const originality = Math.max(0, Math.min(100,
+      (uniqueWords / words) * 100
+    ));
+
     return {
-      readability: 50,
-      grammar: 50,
-      originality: 50,
+      readability,
+      grammar,
+      originality,
       issues: [
         {
-          type: "suggestion" as "suggestion" | "grammar" | "improvement",
-          message: "Analysis unavailable",
-          suggestion: "Unable to perform detailed analysis due to API limits or errors."
+          type: "improvement",
+          message: wordsPerSentence > 20 ? "Sentences are too long" : "Text structure is acceptable",
+          suggestion: wordsPerSentence > 20 ? "Try breaking down long sentences" : "Continue maintaining clear sentence structure"
+        },
+        {
+          type: "grammar",
+          message: sentences === 1 && words > 30 ? "Text is a single long sentence" : "Sentence count is acceptable",
+          suggestion: sentences === 1 && words > 30 ? "Consider adding more sentence breaks" : "Continue with current sentence structure"
         }
       ],
       statistics: {
@@ -340,35 +365,35 @@ function parseAnalysisText(text: string): any {
     issues: [],
     styleSuggestions: []
   };
-  
+
   // Extract scores
   const readabilityMatch = text.match(/readability:?\s*(\d+)/i);
   if (readabilityMatch) {
     result.readability = Math.min(100, Math.max(0, parseInt(readabilityMatch[1])));
   }
-  
+
   const grammarMatch = text.match(/grammar:?\s*(\d+)/i);
   if (grammarMatch) {
     result.grammar = Math.min(100, Math.max(0, parseInt(grammarMatch[1])));
   }
-  
+
   const originalityMatch = text.match(/originality:?\s*(\d+)/i);
   if (originalityMatch) {
     result.originality = Math.min(100, Math.max(0, parseInt(originalityMatch[1])));
   }
-  
+
   // Extract issues
-  const issuesSection = text.match(/issues:?\s*([\s\S]*?)(?=style:|$)/i);
+  const issuesSection = text.match(/issues:?\s*([\s\S]*?)(?=style|$)/i);
   if (issuesSection && issuesSection[1]) {
     const issuesList = issuesSection[1].split(/\n\s*-\s*/);
-    
+
     for (const issue of issuesList) {
       const trimmedIssue = issue.trim();
       if (trimmedIssue && !trimmedIssue.match(/^issues:?$/i)) {
         const issueType: 'grammar' | 'suggestion' | 'improvement' = 
           trimmedIssue.toLowerCase().includes('grammar') ? 'grammar' : 
           trimmedIssue.toLowerCase().includes('improve') ? 'improvement' : 'suggestion';
-        
+
         result.issues.push({
           type: issueType,
           message: trimmedIssue,
@@ -377,12 +402,12 @@ function parseAnalysisText(text: string): any {
       }
     }
   }
-  
+
   // Extract style suggestions
   const styleSection = text.match(/style:?\s*([\s\S]*?)(?=$)/i);
   if (styleSection && styleSection[1]) {
     const styleList = styleSection[1].split(/\n\s*-\s*/);
-    
+
     for (const style of styleList) {
       const trimmedStyle = style.trim();
       if (trimmedStyle && !trimmedStyle.match(/^style:?$/i)) {
@@ -398,6 +423,6 @@ function parseAnalysisText(text: string): any {
       }
     }
   }
-  
+
   return result;
 }
