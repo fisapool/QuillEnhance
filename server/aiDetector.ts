@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { calculateTextStatistics } from "./nlp";
 import { VertexAI } from '@google-cloud/vertexai';
-import * as natural from 'natural';
+import natural from 'natural';
 
 const tokenizer = new natural.WordTokenizer();
 
