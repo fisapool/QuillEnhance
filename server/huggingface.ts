@@ -1,9 +1,9 @@
 import { HfInference } from '@huggingface/inference';
 import { calculateSimilarity } from './nlp';
 
-// If no API key is provided, use models that don't require authentication
-// For better performance, users can get a free API key from huggingface.co
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+// Create HF inference client with proper configuration
+// We explicitly pass empty string to make it use API without authentication
+const hf = new HfInference('');
 
 // Model IDs for different tasks
 // These models are smaller and accessible without authentication
