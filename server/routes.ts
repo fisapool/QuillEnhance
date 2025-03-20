@@ -20,40 +20,154 @@ function useHuggingFace(): boolean {
 }
 
 // Helper functions to choose the appropriate implementation
-function paraphraseText(text: string, mode?: string) {
-  return useHuggingFace() 
-    ? huggingface.paraphraseText(text, mode)
-    : openai.paraphraseText(text, mode);
+async function paraphraseText(text: string, mode?: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace() 
+    ? await huggingface.paraphraseText(text, mode)
+    : await openai.paraphraseText(text, mode);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
-function humanizeAIText(text: string) {
-  return useHuggingFace()
-    ? huggingface.humanizeAIText(text)
-    : openai.humanizeAIText(text);
+async function humanizeAIText(text: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace()
+    ? await huggingface.humanizeAIText(text)
+    : await openai.humanizeAIText(text);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
-function rewordText(text: string) {
-  return useHuggingFace()
-    ? huggingface.rewordText(text)
-    : openai.rewordText(text);
+async function rewordText(text: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace()
+    ? await huggingface.rewordText(text)
+    : await openai.rewordText(text);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
-function rewriteParagraph(text: string) {
-  return useHuggingFace()
-    ? huggingface.rewriteParagraph(text)
-    : openai.rewriteParagraph(text);
+async function rewriteParagraph(text: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace()
+    ? await huggingface.rewriteParagraph(text)
+    : await openai.rewriteParagraph(text);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
-function summarizeText(text: string) {
-  return useHuggingFace()
-    ? huggingface.summarizeText(text)
-    : openai.summarizeText(text);
+async function summarizeText(text: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace()
+    ? await huggingface.summarizeText(text)
+    : await openai.summarizeText(text);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
-function translateText(text: string, targetLanguage: string) {
-  return useHuggingFace()
-    ? huggingface.translateText(text, targetLanguage)
-    : openai.translateText(text, targetLanguage);
+async function translateText(text: string, targetLanguage: string): Promise<{
+  processedText: string;
+  similarity?: number;
+  issues: Array<{
+    type: 'grammar' | 'suggestion' | 'improvement';
+    message: string;
+    suggestion: string;
+    position?: {
+      start: number;
+      end: number;
+    };
+  }>;
+}> {
+  const result = useHuggingFace()
+    ? await huggingface.translateText(text, targetLanguage)
+    : await openai.translateText(text, targetLanguage);
+  
+  // Ensure the result has an issues array
+  if (!result.issues) {
+    result.issues = [];
+  }
+  
+  return result;
 }
 
 function checkGrammar(text: string) {

@@ -148,36 +148,54 @@ export async function rewriteParagraph(text: string): Promise<{ processedText: s
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
     
-    return { processedText, similarity };
+    return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Paragraph rewriting error with Hugging Face:", error);
     return {
       processedText: `[Error] Failed to rewrite paragraph. ${text}`,
-      similarity: 100
+      similarity: 100,
+      issues: []
     };
   }
 }
 
-export async function summarizeText(text: string): Promise<{ processedText: string, similarity?: number }> {
+export async function summarizeText(text: string): Promise<{ processedText: string, similarity?: number, issues: Array<{
+  type: 'grammar' | 'suggestion' | 'improvement';
+  message: string;
+  suggestion: string;
+  position?: {
+    start: number;
+    end: number;
+  };
+}> }> {
   try {
     // Use text generation for summarization to avoid authentication issues
     const instruction = "Summarize the following text concisely while preserving the key points";
     const processedText = await generateText(text, instruction);
     const similarity = calculateSimilarity(text, processedText);
     
-    return { processedText, similarity };
+    return { processedText, similarity, issues: [] };
   } catch (error) {
     console.error("Summarizing error with Hugging Face:", error);
     
     // Return original text with error message
     return {
       processedText: `[Error] Failed to summarize text. ${text}`,
-      similarity: 100
+      similarity: 100,
+      issues: []
     };
   }
 }
 
-export async function translateText(text: string, targetLanguage: string): Promise<{ processedText: string, similarity?: number }> {
+export async function translateText(text: string, targetLanguage: string): Promise<{ processedText: string, similarity?: number, issues: Array<{
+  type: 'grammar' | 'suggestion' | 'improvement';
+  message: string;
+  suggestion: string;
+  position?: {
+    start: number;
+    end: number;
+  };
+}> }> {
   try {
     // Using text generation for translations as it's more flexible with languages
     const instruction = `Translate the following text into ${targetLanguage}:`;
@@ -187,13 +205,15 @@ export async function translateText(text: string, targetLanguage: string): Promi
     return { 
       processedText,
       // Similarity doesn't make sense for translations between languages
-      similarity: 0 
+      similarity: 0,
+      issues: []
     };
   } catch (error) {
     console.error("Translation error with Hugging Face:", error);
     return {
       processedText: `[Error] Failed to translate text. ${text}`,
-      similarity: 0
+      similarity: 0,
+      issues: []
     };
   }
 }
@@ -291,7 +311,7 @@ export async function analyzeText(text: string): Promise<any> {
       originality: 50,
       issues: [
         {
-          type: "suggestion",
+          type: "suggestion" as "suggestion" | "grammar" | "improvement",
           message: "Analysis unavailable",
           suggestion: "Unable to perform detailed analysis due to API limits or errors."
         }
@@ -343,9 +363,12 @@ function parseAnalysisText(text: string): any {
     for (const issue of issuesList) {
       const trimmedIssue = issue.trim();
       if (trimmedIssue && !trimmedIssue.match(/^issues:?$/i)) {
+        const issueType: 'grammar' | 'suggestion' | 'improvement' = 
+          trimmedIssue.toLowerCase().includes('grammar') ? 'grammar' : 
+          trimmedIssue.toLowerCase().includes('improve') ? 'improvement' : 'suggestion';
+        
         result.issues.push({
-          type: trimmedIssue.toLowerCase().includes('grammar') ? 'grammar' : 
-                trimmedIssue.toLowerCase().includes('improve') ? 'improvement' : 'suggestion',
+          type: issueType,
           message: trimmedIssue,
           suggestion: trimmedIssue
         });
